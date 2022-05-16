@@ -11,7 +11,7 @@
       
       
       <link rel="icon" href="../../static/logo.png">
-      <meta name="generator" content="mkdocs-1.3.0, mkdocs-material-8.2.9">
+      <meta name="generator" content="mkdocs-1.3.0, mkdocs-material-8.2.15">
     
     
       
@@ -19,10 +19,10 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.120efc48.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.c382b1dc.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.9647289d.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.cc9b2e1e.min.css">
         
           
           
@@ -264,6 +264,18 @@
       </a>
     </li>
   
+
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../../publications/" class="md-tabs__link">
+      Publications
+    </a>
+  </li>
 
       
     </ul>
@@ -1212,6 +1224,21 @@
   
 
     
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../publications/" class="md-nav__link">
+        Publications
+      </a>
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -1411,8 +1438,7 @@
 <h3 id="publishing-the-helm-chart">Publishing the Helm Chart</h3>
 <p>Once your Helm chart is ready, you need to push it to a <a href="https://helm.sh/docs/topics/registries/">OCI-based registry</a> such as <a href="https://ghcr.io">ghcr.io</a>. This allows the control plane of Fybrik to later pull the chart whenever it needs to be installed.</p>
 <p>You can use the <a href="https://github.com/fybrik/fybrik/blob/master/hack/make-rules/helm.mk">hack/make-rules/helm.mk</a> Makefile, or manually push the chart as described in the <a href="https://github.com/helm/community/blob/main/hips/hip-0006.md">link</a>:</p>
-<div class="highlight"><pre><span></span><code><span class="nv">HELM_EXPERIMENTAL_OCI</span><span class="o">=</span><span class="m">1</span> 
-helm registry login -u &lt;username&gt; &lt;registry&gt;
+<div class="highlight"><pre><span></span><code>helm registry login -u &lt;username&gt; &lt;registry&gt;
 helm package &lt;chart folder&gt; -d &lt;local-chart-path&gt;
 helm push &lt;local-chart-path&gt; oci://&lt;registry&gt;/&lt;path&gt;
 </code></pre></div>
@@ -1584,6 +1610,21 @@ a module that does not perform any transformation on the data may omit the <code
         </a>
       
       
+        
+        <a href="../../publications/" class="md-footer__link md-footer__link--next" aria-label="Next: Publications" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Publications
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
+          </div>
+        </a>
+      
     </nav>
   
   <div class="md-footer-meta md-typeset">
@@ -1626,7 +1667,7 @@ a module that does not perform any transformation on the data may omit the <code
     <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs"], "search": "../../assets/javascripts/workers/search.2a1c317c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.6e54b5cd.min.js"></script>
+      <script src="../../assets/javascripts/bundle.a6c66575.min.js"></script>
       
     
   </body>

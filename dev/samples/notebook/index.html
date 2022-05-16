@@ -11,7 +11,7 @@
       
       
       <link rel="icon" href="../../static/logo.png">
-      <meta name="generator" content="mkdocs-1.3.0, mkdocs-material-8.2.9">
+      <meta name="generator" content="mkdocs-1.3.0, mkdocs-material-8.2.15">
     
     
       
@@ -19,10 +19,10 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.120efc48.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.c382b1dc.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.9647289d.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.cc9b2e1e.min.css">
         
           
           
@@ -264,6 +264,18 @@
       </a>
     </li>
   
+
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../../publications/" class="md-tabs__link">
+      Publications
+    </a>
+  </li>
 
       
     </ul>
@@ -1150,6 +1162,21 @@
   
 
     
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../publications/" class="md-nav__link">
+        Publications
+      </a>
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -1258,15 +1285,24 @@
 
 
 <h1 id="notebook-sample">Notebook sample</h1>
-<p>This sample shows how Fybrik enables a Jupyter notebook workload to access a dataset.
-It demonstrates how policies are seamlessly applied when accessing the dataset classified as financial data.</p>
+<p>This sample shows how Fybrik enables a Jupyter notebook workload to access a cataloged dataset.
+It demonstrates how policies regarding the use of personal information are seamlessly applied when accessing a dataset containing financial data.</p>
 <p>In this sample you play multiple roles:</p>
 <ol>
 <li>As a data owner you upload a dataset and register it in a data catalog</li>
 <li>As a data steward you setup data governance policies</li>
 <li>As a data user you specify your data usage requirements and use a notebook to consume the data</li>
 </ol>
+<p>Tools used by the actors:</p>
+<ol>
+<li>The data owner would typically register the dataset in a proprietary or open source catalog.  We have provided <a href="../../reference/katalog/">katalog</a> - a thin layer acting as a replacement for the data catalog for evaluation purposes. This simplifies the sample deployment.</li>
+<li>The data owner stores credentials for accessing the dataset in kubernetes secrets.</li>
+<li>Proprietary and open source data governance systems are available either as part of a data catalog or as stand-alone systems.  This sample uses the open source <a href="https://www.openpolicyagent.org/">OpenPolicyAgent</a>.  The data steward writes the policies in OPA's <a href="https://www.openpolicyagent.org/docs/latest/policy-language/#what-is-rego">rego</a> language.</li>
+<li>Any editor can be used to write the FybrikApplication.yaml via which the data user expresses the data usage requirements.</li>
+<li>A jupyter notebook is the workload from which the data is consumed by the data user.</li>
+</ol>
 <h2 id="before-you-begin">Before you begin</h2>
+<p>Typically this would be done by an IT administrator.</p>
 <ul>
 <li>Install Fybrik using the <a href="../../get-started/quickstart/">Quick Start</a> guide.
   This sample assumes the use of the built-in catalog, Open Policy Agent (OPA) and flight module.</li>
@@ -1308,7 +1344,8 @@ aws configure <span class="nb">set</span> aws_access_key_id <span class="si">${<
 </ol>
 </details>
 <h2 id="register-the-dataset-in-a-data-catalog">Register the dataset in a data catalog</h2>
-<p>Register the credentials required for accessing the dataset. Replace the values for <code>access_key</code> and <code>secret_key</code> with the values from the object storage service that you used and run:</p>
+<p>In this step you are performing the role of the data owner, registering his data in the data catalog and registering the credentials for accessing the data in the credential manager.</p>
+<p>Register the credentials required for accessing the dataset as a kubernetes secret. Replace the values for <code>access_key</code> and <code>secret_key</code> with the values from the object storage service that you used and run:</p>
 <div class="highlight"><pre><span></span><code><span class="l l-Scalar l-Scalar-Plain">cat &lt;&lt; EOF | kubectl apply -f -</span><span class="w"></span>
 <span class="l l-Scalar l-Scalar-Plain">apiVersion</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1</span><span class="w"></span>
 <span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Secret</span><span class="w"></span>
@@ -1320,7 +1357,7 @@ aws configure <span class="nb">set</span> aws_access_key_id <span class="si">${<
 <span class="w">  </span><span class="nt">secret_key</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;${SECRET_KEY}&quot;</span><span class="w"></span>
 <span class="l l-Scalar l-Scalar-Plain">EOF</span><span class="w"></span>
 </code></pre></div>
-<p>Then, register the data asset itself in the catalog. Replace the values for <code>endpoint</code>, <code>bucket</code> and <code>object_key</code> with values from the object storage service that you used and run:</p>
+<p>Then, register the data asset itself in the data catalog <code>katalog</code> used for samples. Replace the values for <code>endpoint</code>, <code>bucket</code> and <code>object_key</code> with values from the object storage service that you used and run:</p>
 <div class="highlight"><pre><span></span><code><span class="l l-Scalar l-Scalar-Plain">cat &lt;&lt; EOF | kubectl apply -f -</span><span class="w"></span>
 <span class="l l-Scalar l-Scalar-Plain">apiVersion</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">katalog.fybrik.io/v1alpha1</span><span class="w"></span>
 <span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Asset</span><span class="w"></span>
@@ -1361,7 +1398,7 @@ aws configure <span class="nb">set</span> aws_access_key_id <span class="si">${<
 </code></pre></div>
 <p><a href="../../get-started/quickstart/">Quick Start</a> installs a fybrik control plane with the region <code>theshire</code> by default. If you change it or the <code>geography</code> in the yaml above, a <a href="https://github.com/fybrik/mover">copy module</a> will be required by the policies, but we do not install any copy module in the <a href="../../get-started/quickstart/">Quick Start</a>.</p>
 <h2 id="define-data-access-policies">Define data access policies</h2>
-<p>Define an <a href="https://www.openpolicyagent.org/">OpenPolicyAgent</a> policy to redact the columns tagged as <code>PII</code> for datasets tagged with <code>finance</code>. Below is the policy (written in <a href="https://www.openpolicyagent.org/docs/latest/policy-language/#what-is-rego">Rego</a> language):</p>
+<p>Acting as the data steward, define an <a href="https://www.openpolicyagent.org/">OpenPolicyAgent</a> policy to redact the columns tagged as <code>PII</code> for datasets tagged with <code>finance</code>. Below is the policy (written in <a href="https://www.openpolicyagent.org/docs/latest/policy-language/#what-is-rego">Rego</a> language):</p>
 <div class="highlight"><pre><span></span><code>package dataapi.authz
 
 rule[{&quot;action&quot;: {&quot;name&quot;:&quot;RedactAction&quot;, &quot;columns&quot;: column_names}, &quot;policy&quot;: description}] {
@@ -1458,7 +1495,7 @@ kubectl expose deployment my-notebook --port<span class="o">=</span><span class=
 The next steps use the endpoint to read the data in a python notebook</p>
 <ol>
 <li>Insert a new notebook cell to install pandas and pyarrow packages:
-  <div class="highlight"><pre><span></span><code><span class="o">%</span><span class="n">pip</span> <span class="n">install</span> <span class="n">pandas</span> <span class="n">pyarrow</span>
+  <div class="highlight"><pre><span></span><code><span class="o">%</span><span class="n">pip</span> <span class="n">install</span> <span class="n">pandas</span> <span class="n">pyarrow</span><span class="o">==</span><span class="mf">7.0</span><span class="o">.*</span>
 </code></pre></div></li>
 <li>Insert a new notebook cell to read the data using the endpoint value extracted from the <code>FybrikApplication</code> in the previous step:
   <div class="highlight"><pre><span></span><code>import json
@@ -1589,7 +1626,7 @@ df: pd.DataFrame <span class="o">=</span> reader.read_pandas<span class="o">()</
     <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs"], "search": "../../assets/javascripts/workers/search.2a1c317c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.6e54b5cd.min.js"></script>
+      <script src="../../assets/javascripts/bundle.a6c66575.min.js"></script>
       
     
   </body>
