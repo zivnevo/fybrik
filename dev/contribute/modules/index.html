@@ -11,7 +11,7 @@
       
       
       <link rel="icon" href="../../static/logo.png">
-      <meta name="generator" content="mkdocs-1.3.0, mkdocs-material-8.3.7">
+      <meta name="generator" content="mkdocs-1.3.1, mkdocs-material-8.3.9">
     
     
       
@@ -19,7 +19,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.4a0965b7.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.1d29e8d0.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.cbb835fc.min.css">
@@ -1329,6 +1329,20 @@
 
             
           
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../openapi/" class="md-nav__link">
+        Using OpenAPI Generator
+      </a>
+    </li>
+  
+
+            
+          
         </ul>
       </nav>
     </li>
@@ -1545,6 +1559,8 @@
 <p>An example for Vault Read Secret API call which uses the Vault parameters is as follows:</p>
 <div class="highlight"><pre><span></span><code>$ curl --header &quot;X-Vault-Token: ...&quot; -X GET https://&lt;address&gt;/&lt;secretPath&gt;
 </code></pre></div>
+<p>Fybrik repository contains a <a href="https://github.com/fybrik/fybrik/tree/master/python/vault">Python Vault package</a> that modules can use to
+retrieve the credentials.</p>
 <h2 id="module-helm-chart">Module Helm Chart</h2>
 <p>For any module chosen by the control plane to be part of the data path, the control plane needs to be able to install/remove/upgrade an instance of the module. Fybrik uses <a href="https://helm.sh/docs/intro/using_helm/">Helm</a> to provide this functionality. Follow the Helm <a href="https://helm.sh/docs/chart_template_guide/getting_started/">getting started</a> guide if you are unfamiliar with Helm. Note that Helm 3.7 or above is required.</p>
 <p>The names of the Kubernetes resources deployed by the module helm chart must contain the release name to avoid resource conflicts. A Kubernetes <code>service</code> resource which is used to access the module must have a name equal to the release name (this service name is also used in the optional <a href="../../reference/crds/#fybrikmodulespeccapabilitiesapiendpoint"><code>spec.capabilities.api.endpoint.hostname</code></a> field).</p>
@@ -1772,13 +1788,13 @@ a module that does not perform any transformation on the data may omit the <code
       
       
         
-        <a href="../../publications/" class="md-footer__link md-footer__link--next" aria-label="Next: Publications" rel="next">
+        <a href="../openapi/" class="md-footer__link md-footer__link--next" aria-label="Next: Using OpenAPI Generator" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
                 Next
               </span>
-              Publications
+              Using OpenAPI Generator
             </div>
           </div>
           <div class="md-footer__button md-icon">
@@ -1828,7 +1844,7 @@ a module that does not perform any transformation on the data may omit the <code
     <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs"], "search": "../../assets/javascripts/workers/search.b97dbffb.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.0238f547.min.js"></script>
+      <script src="../../assets/javascripts/bundle.6c7ad80a.min.js"></script>
       
     
   </body>
