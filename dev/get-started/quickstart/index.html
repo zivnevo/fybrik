@@ -912,6 +912,20 @@
   
   
     <li class="md-nav__item">
+      <a href="../../tasks/add-vault-plugin/" class="md-nav__link">
+        Adding a new HashiCorp Vault Plugin
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../tasks/omd-discover-s3-asset/" class="md-nav__link">
         Discovering an S3 asset through the OpenMetadata UI
       </a>
@@ -1537,28 +1551,41 @@ kubectl <span class="nb">wait</span> --for<span class="o">=</span><span class="n
 <li><a href="https://fybrik.io/dev/reference/katalog/">katalog</a>: a data catalog stub used for testing and evaluation purposes.</li>
 </ol>
 <p>In this guide we use the OpenMetadata data catalog.</p>
-<p>To use OpenMetadata, you can either use an existing deployment, or run the following commands to deploy OpenMetadata in kubernetes:</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Kubernetes</label><label for="__tabbed_3_2">IBM OpenShift</label></div>
+<p>To use OpenMetadata, you can either use an existing deployment, or run the following commands to deploy OpenMetadata in kubernetes.</p>
+<p><em>Note:</em> OpenMetadata deployment requires a cluster storage provisioner that has PersistentVolume capability of ReadWriteMany Access Mode.
+Below we provide examples of OpenMetadata installations on a single node kind cluster (for development and testing) and an 
+OpenShift cluster on <a href="https://www.ibm.com/cloud">IBM Cloud</a>. For other deployments please check <a href="https://docs.open-metadata.org/deployment/kubernetes">OpenMetadata Kubernetes deployment</a> </p>
+<div class="tabbed-set tabbed-alternate" data-tabs="3:3"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><input id="__tabbed_3_3" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">A single node Kind cluster</label><label for="__tabbed_3_2">IBM OpenShift</label><label for="__tabbed_3_3">Existing deployment</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><div class="highlight"><pre><span></span><code><span class="nb">export</span> <span class="nv">FYBRIK_BRANCH</span><span class="o">=</span>master
 curl https://raw.githubusercontent.com/fybrik/fybrik/master/third_party/openmetadata/install_OM.sh <span class="p">|</span> bash -
 </code></pre></div>
-If you want to change the OpenMetadata configuration parameters, run:
+Alternatively, if you want to change the OpenMetadata configuration parameters, run:
 <div class="highlight"><pre><span></span><code><span class="nb">export</span> <span class="nv">FYBRIK_BRANCH</span><span class="o">=</span>master
 curl https://raw.githubusercontent.com/fybrik/fybrik/master/third_party/openmetadata/install_OM.sh <span class="p">|</span> bash -s -- --operation getFiles
 </code></pre></div>
-This command downloads the installation files to a temporary directory. Follow the instructions that appear on screen to change the configuration parameters and then run <code>make</code>. Once the installation is over, be sure to remove the temporary directory.</p>
+This command downloads the installation files to a temporary directory. Follow the instructions that appear on screen to change the configuration parameters and then run <code>make</code>. 
+Once the installation is over, be sure to remove the temporary directory.</p>
 </div>
 <div class="tabbed-block">
 <p><div class="highlight"><pre><span></span><code><span class="nb">export</span> <span class="nv">FYBRIK_BRANCH</span><span class="o">=</span>master
 curl https://raw.githubusercontent.com/fybrik/fybrik/master/third_party/openmetadata/install_OM.sh <span class="p">|</span> bash -s -- --k8s-type ibm-openshift
 </code></pre></div>
-If you want to change the OpenMetadata configuration parameters, run:
+Alternatively, if you want to change the OpenMetadata configuration parameters, run:
 <div class="highlight"><pre><span></span><code><span class="nb">export</span> <span class="nv">FYBRIK_BRANCH</span><span class="o">=</span>master
 curl https://raw.githubusercontent.com/fybrik/fybrik/master/third_party/openmetadata/install_OM.sh <span class="p">|</span> bash -s -- --k8s-type ibm-openshift --operation getFiles
 </code></pre></div>
-This command downloads the installation files to a temporary directory. Follow the instructions that appear on screen to change the configuration parameters and then run <code>make</code>. Once the installation is over, be sure to remove the temporary directory.</p>
+This command downloads the installation files to a temporary directory. Follow the instructions that appear on screen to change the configuration parameters and then run <code>make</code>. 
+Once the installation is over, be sure to remove the temporary directory.</p>
+</div>
+<div class="tabbed-block">
+<p>If you want to use an existing OpenMetadata deployment, you have to configure it according to Fybrik requirements:
+Run the following commands to download the configuration files:
+<div class="highlight"><pre><span></span><code><span class="nb">export</span> <span class="nv">FYBRIK_BRANCH</span><span class="o">=</span>master
+curl https://raw.githubusercontent.com/fybrik/fybrik/master/third_party/openmetadata/install_OM.sh <span class="p">|</span> bash -s -- --operation getFiles
+</code></pre></div>
+Follow the instructions that appear on screen to change the OpenMetadata location and credentials (<code>OPENMETADATA_ENDPOINT</code>, <code>OPENMETADATA_USER</code> and <code>OPENMETADATA_PASSWORD</code>) and then run <code>make prepare-openmetadata-for-fybrik</code>.</p>
 </div>
 </div>
 </div>
