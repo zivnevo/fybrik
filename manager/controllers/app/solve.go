@@ -13,39 +13,36 @@ import (
 	"fybrik.io/fybrik/pkg/optimizer"
 )
 
-// find a solution for a data path
-// satisfying governance and admin policies
-// with respect to the optimization strategy
-func solveSingleDataset(env *datapath.Environment, dataset *datapath.DataInfo, log *zerolog.Logger) (datapath.Solution, error) {
+// find an optimal solution for a data plane (given the optimization strategy),
+// which also satisfies governance and admin policies,
+func solve(env *datapath.Environment, datasets []datapath.DataInfo, log *zerolog.Logger) ([]datapath.Solution, error) {
 	cspPath := environment.GetCSPPath()
-	if environment.UseCSP() && cspPath != "" {
-		cspOptimizer := optimizer.NewOptimizer(env, []datapath.DataInfo{*dataset}, cspPath, log)
+	if environment.UseCSP() && cspPath != "" { // If a CSP solver is configured, use it to find a solution for all data paths at once
+		cspOptimizer := optimizer.NewOptimizer(env, datasets, cspPath, log)
 		solution, err := cspOptimizer.Solve()
 		if err == nil {
 			if len(solution) > 0 { // solver found a solution
-				return solution[0], nil
+				return solution, nil
 			}
 			// solver returned UNSAT
-			msg := "Data path cannot be constructed given the deployed modules and the active restrictions"
-			log.Error().Str(logging.DATASETID, dataset.Context.DataSetID).Msg(msg)
-			logging.LogStructure("Data Item Context", dataset, log, zerolog.TraceLevel, true, true)
+			msg := "Data plane cannot be constructed given the deployed modules and the active restrictions"
+			log.Error().Msg(msg)
+			logging.LogStructure("Data Items Context", datasets, log, zerolog.TraceLevel, true, true)
 			logging.LogStructure("Module Map", env.Modules, log, zerolog.TraceLevel, true, true)
-			return datapath.Solution{}, errors.New(msg + " for " + dataset.Context.DataSetID)
-		} else {
-			msg := "Error solving CSP. Fybrik will now search for a solution without considering optimization goals."
-			log.Error().Err(err).Str(logging.DATASETID, dataset.Context.DataSetID).Msg(msg)
-			// now fallback to finding a non-optimized solution
+			return nil, errors.New(msg)
 		}
-	}
-	pathBuilder := PathBuilder{Log: log, Env: env, Asset: dataset}
-	return pathBuilder.solve()
-}
 
-// find a solution for all data paths at once
-func solve(env *datapath.Environment, datasets []datapath.DataInfo, log *zerolog.Logger) ([]datapath.Solution, error) {
+		// CSP failed for an unknown reason:issue an error and fallback to finding a non-optimized solution
+		msg := "Error solving CSP. Fybrik will now search for a solution without considering optimization goals."
+		log.Error().Err(err).Msg(msg)
+	}
+
+	// FIXME: Do we warn the user if optimization goals are present but no CSP engine is set?
+	// No solution from CSP: use PathBuilder to build solutions. A datapath is built separately for every dataset
 	solutions := []datapath.Solution{}
 	for i := range datasets {
-		solution, err := solveSingleDataset(env, &datasets[i], log)
+		pathBuilder := PathBuilder{Log: log, Env: env, Asset: &datasets[i]}
+		solution, err := pathBuilder.solve()
 		if err != nil {
 			return solutions, err
 		}

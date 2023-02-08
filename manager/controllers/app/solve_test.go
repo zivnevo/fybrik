@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"testing"
 
+	"emperror.dev/errors"
 	"github.com/onsi/gomega"
 	"github.com/rs/zerolog"
 
@@ -191,6 +192,17 @@ func createDeleteRequest() *datapath.DataInfo {
 			},
 		},
 	}
+}
+
+func solveSingleDataset(env *datapath.Environment, dataset *datapath.DataInfo, log *zerolog.Logger) (datapath.Solution, error) {
+	solution, err := solve(env, []datapath.DataInfo{*dataset}, log)
+	if err != nil {
+		return datapath.Solution{}, err
+	}
+	if len(solution) == 0 {
+		return datapath.Solution{}, errors.New("No solution found")
+	}
+	return solution[0], nil
 }
 
 // no clusters/modules - data path can't be constructed
