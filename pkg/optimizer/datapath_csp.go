@@ -74,10 +74,9 @@ func NewDataPathCSP(problemData []datapath.DataInfo, env *datapath.Environment) 
 	dpCSP.requiredActions = map[string]taxonomy.Action{}
 	dpCSP.interfaceIdx = map[taxonomy.Interface]int{}
 	dpCSP.reverseIntfcMap = map[int]*taxonomy.Interface{}
-	dataSetIntfc := getAssetInterface(dpCSP.problemData[0].DataDetails)
-	dpCSP.addInterface(nil)           // ensure nil interface always gets index 0
-	dpCSP.addInterface(&dataSetIntfc) // data-set interface always gets index 1 (cannot be nil)
-	dpCSP.addInterface(dpCSP.problemData[0].Context.Requirements.Interface)
+	dpCSP.registerInterface(nil) // ensure nil interface always gets index 0
+	dpCSP.registerDatasetInterfaces()
+	dpCSP.registerStorageAccountInterfaces()
 
 	dpCSP.fzModel.AddHeaderComment("Encoding of modules and their capabilities:")
 	comment := ""
@@ -85,7 +84,7 @@ func NewDataPathCSP(problemData []datapath.DataInfo, env *datapath.Environment) 
 		for idx, capability := range module.Spec.Capabilities {
 			modCap := moduleAndCapability{module, &module.Spec.Capabilities[idx], idx, false, false, false, false}
 			if dpCSP.moduleCapabilityAllowedByRestrictions(modCap) {
-				dpCSP.addModCapInterfacesToMaps(&modCap)
+				dpCSP.registerModCapInterfaces(&modCap)
 				dpCSP.modulesCapabilities = append(dpCSP.modulesCapabilities, modCap)
 				comment = strconv.Itoa(len(dpCSP.modulesCapabilities))
 			} else {
@@ -96,7 +95,6 @@ func NewDataPathCSP(problemData []datapath.DataInfo, env *datapath.Environment) 
 		}
 	}
 
-	dpCSP.addStorageAccountInterfaces()
 	dpCSP.fzModel.AddHeaderComment("Encoding of interfaces:")
 	for intfc, intfcIdx := range dpCSP.interfaceIdx {
 		dpCSP.fzModel.AddHeaderComment(encodingComment(intfcIdx, fmt.Sprintf("%v", intfc)))
@@ -114,22 +112,31 @@ func NewDataPathCSP(problemData []datapath.DataInfo, env *datapath.Environment) 
 	return &dpCSP
 }
 
+func (dpc *DataPathCSP) registerDatasetInterfaces() {
+	for datasetIdx := range dpc.problemData {
+		dataset := &dpc.problemData[datasetIdx]
+		datasetIntfc := getAssetInterface(dataset.DataDetails)
+		dpc.registerInterface(&datasetIntfc)
+		dpc.registerInterface(dataset.Context.Requirements.Interface)
+	}
+}
+
 // Add the interfaces defined in a given module's capability to the 2 interface maps
-func (dpc *DataPathCSP) addModCapInterfacesToMaps(modcap *moduleAndCapability) {
+func (dpc *DataPathCSP) registerModCapInterfaces(modcap *moduleAndCapability) {
 	capability := modcap.capability
 	for _, intfc := range capability.SupportedInterfaces {
 		if intfc.Source != nil {
-			dpc.addInterface(intfc.Source)
+			dpc.registerInterface(intfc.Source)
 			modcap.hasSource = true
 		}
 		if intfc.Sink != nil {
-			dpc.addInterface(intfc.Sink)
+			dpc.registerInterface(intfc.Sink)
 			modcap.hasSink = true
 		}
 	}
 	if (!modcap.hasSource || !modcap.hasSink) && capability.API != nil {
 		apiInterface := &taxonomy.Interface{Protocol: capability.API.Connection.Name, DataFormat: capability.API.DataFormat}
-		dpc.addInterface(apiInterface)
+		dpc.registerInterface(apiInterface)
 		modcap.virtualSource = !modcap.hasSource
 		modcap.virtualSink = !modcap.hasSink
 		modcap.hasSource = true
@@ -138,14 +145,14 @@ func (dpc *DataPathCSP) addModCapInterfacesToMaps(modcap *moduleAndCapability) {
 }
 
 // Add interfaces used by storage accounts
-func (dpc *DataPathCSP) addStorageAccountInterfaces() {
+func (dpc *DataPathCSP) registerStorageAccountInterfaces() {
 	for _, sa := range dpc.env.StorageAccounts {
-		dpc.addInterface(&taxonomy.Interface{Protocol: sa.Spec.Type, DataFormat: ""})
+		dpc.registerInterface(&taxonomy.Interface{Protocol: sa.Spec.Type, DataFormat: ""})
 	}
 }
 
 // Add the given interface to the 2 interface maps (but avoid duplicates)
-func (dpc *DataPathCSP) addInterface(intfc *taxonomy.Interface) {
+func (dpc *DataPathCSP) registerInterface(intfc *taxonomy.Interface) {
 	if intfc == nil {
 		intfc = &taxonomy.Interface{Protocol: "@@This is not a protocol@@"}
 	}
