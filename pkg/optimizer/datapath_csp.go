@@ -57,7 +57,7 @@ type moduleAndCapability struct {
 
 // The main class for producing a CSP from data-path constraints and for decoding solver's solutions
 type DataPathCSP struct {
-	problemData         *datapath.DataInfo
+	problemData         []datapath.DataInfo
 	env                 *datapath.Environment
 	modulesCapabilities []moduleAndCapability       // An enumeration of allowed capabilities in all modules
 	interfaceIdx        map[taxonomy.Interface]int  // gives an index for each unique interface
@@ -69,15 +69,15 @@ type DataPathCSP struct {
 
 // The ctor also enumerates all available (module x capabilities) and all available interfaces
 // The generated enumerations are listed at the header of the FlatZinc model
-func NewDataPathCSP(problemData *datapath.DataInfo, env *datapath.Environment) *DataPathCSP {
+func NewDataPathCSP(problemData []datapath.DataInfo, env *datapath.Environment) *DataPathCSP {
 	dpCSP := DataPathCSP{problemData: problemData, env: env, fzModel: NewFlatZincModel()}
 	dpCSP.requiredActions = map[string]taxonomy.Action{}
 	dpCSP.interfaceIdx = map[taxonomy.Interface]int{}
 	dpCSP.reverseIntfcMap = map[int]*taxonomy.Interface{}
-	dataSetIntfc := getAssetInterface(dpCSP.problemData.DataDetails)
+	dataSetIntfc := getAssetInterface(dpCSP.problemData[0].DataDetails)
 	dpCSP.addInterface(nil)           // ensure nil interface always gets index 0
 	dpCSP.addInterface(&dataSetIntfc) // data-set interface always gets index 1 (cannot be nil)
-	dpCSP.addInterface(dpCSP.problemData.Context.Requirements.Interface)
+	dpCSP.addInterface(dpCSP.problemData[0].Context.Requirements.Interface)
 
 	dpCSP.fzModel.AddHeaderComment("Encoding of modules and their capabilities:")
 	comment := ""
@@ -174,7 +174,7 @@ func (dpc *DataPathCSP) BuildFzModel(pathLength int) (string, error) {
 	moduleClusterVarType := fznRangeVarType(1, len(dpc.env.Clusters))
 	dpc.fzModel.AddVariableArray(clusterVarname, moduleClusterVarType, pathLength+1, false, true)
 	// Fix moduleCluster[pathLength+1] to the workload cluster
-	workloadCluster := getWorkloadClusterIndex(dpc.problemData.WorkloadCluster, dpc.env.Clusters)
+	workloadCluster := getWorkloadClusterIndex(dpc.problemData[0].WorkloadCluster, dpc.env.Clusters)
 	dpc.fzModel.AddConstraint(IntEqConstraint, []string{varAtPos(clusterVarname, pathLength+1), workloadCluster, TrueValue})
 	// Variables to select the source and sink interface for each module on the path (0 means nil interface)
 	moduleInterfaceVarType := fznRangeVarType(0, len(dpc.interfaceIdx)-1)
@@ -204,8 +204,8 @@ func (dpc *DataPathCSP) BuildFzModel(pathLength int) (string, error) {
 // e. storage account satisfies "transform" restrictions if a governance action is selected
 // f. capabilities that must be deployed are indeed deployed
 func (dpc *DataPathCSP) addAdminConfigRestrictions(pathLength int) error {
-	for decCapability := range dpc.problemData.Configuration.ConfigDecisions {
-		decision := dpc.problemData.Configuration.ConfigDecisions[decCapability]
+	for decCapability := range dpc.problemData[0].Configuration.ConfigDecisions {
+		decision := dpc.problemData[0].Configuration.ConfigDecisions[decCapability]
 		relevantModCaps := []string{}
 		for modCapIdx, moduleCap := range dpc.modulesCapabilities {
 			if moduleCap.capability.Capability != decCapability {
@@ -276,7 +276,7 @@ func (dpc *DataPathCSP) ensureCapabilityIsDeployed(modCaps []string, pathLength 
 
 // Decide if a given module and its given capability satisfy all administrator's restrictions
 func (dpc *DataPathCSP) moduleCapabilityAllowedByRestrictions(modcap moduleAndCapability) bool {
-	decision := dpc.problemData.Configuration.ConfigDecisions[modcap.capability.Capability]
+	decision := dpc.problemData[0].Configuration.ConfigDecisions[modcap.capability.Capability]
 	if decision.Deploy == adminconfig.StatusFalse {
 		return false // this type of capability should never be deployed
 	}
@@ -319,7 +319,7 @@ func (dpc *DataPathCSP) saSatisfiesRestrictions(sa *fappv2.FybrikStorageAccount,
 // Make sure that every required governance action is implemented exactly one time.
 func (dpc *DataPathCSP) addGovernanceActionConstraints(pathLength int) {
 	allOnesArrayLiteral := arrayOfSameInt(1, pathLength)
-	for _, action := range dpc.problemData.Actions {
+	for _, action := range dpc.problemData[0].Actions {
 		// An *output* array of Booleans variable to mark whether the current action is applied at location i
 		actionVar := dpc.addActionIndicator(action, pathLength)
 		// ensuring action is implemented once
@@ -327,9 +327,9 @@ func (dpc *DataPathCSP) addGovernanceActionConstraints(pathLength int) {
 			BoolLinEqConstraint, []string{fznCompoundLiteral(allOnesArrayLiteral, false), actionVar, strconv.Itoa(1)})
 	}
 
-	if dpc.problemData.Context.Flow != taxonomy.WriteFlow || dpc.problemData.Context.Requirements.FlowParams.IsNewDataSet {
+	if dpc.problemData[0].Context.Flow != taxonomy.WriteFlow || dpc.problemData[0].Context.Requirements.FlowParams.IsNewDataSet {
 		for saIdx, sa := range dpc.env.StorageAccounts {
-			actions, found := dpc.problemData.StorageRequirements[sa.Spec.Geography]
+			actions, found := dpc.problemData[0].StorageRequirements[sa.Spec.Geography]
 			if !found { //
 				preventAssignments(dpc.fzModel, []string{saVarname}, []int{saIdx + 1}, pathLength)
 			} else {
@@ -386,8 +386,8 @@ func (dpc *DataPathCSP) addInterfaceConstraints(pathLength int) {
 
 	// Now, ensure interfaces match along the data-path from dataset to workload
 	startIntfcIndexes := fznCompoundLiteral(dpc.getMatchingInterfaces(dpc.reverseIntfcMap[1]), true)
-	endIntfcIndexes := fznCompoundLiteral(dpc.getMatchingInterfaces(dpc.problemData.Context.Requirements.Interface), true)
-	if dpc.problemData.Context.Flow == taxonomy.WriteFlow {
+	endIntfcIndexes := fznCompoundLiteral(dpc.getMatchingInterfaces(dpc.problemData[0].Context.Requirements.Interface), true)
+	if dpc.problemData[0].Context.Flow == taxonomy.WriteFlow {
 		startIntfcIndexes, endIntfcIndexes = endIntfcIndexes, startIntfcIndexes // swap start and end for write flows
 	}
 	dpc.fzModel.AddConstraint(SetInConstraint, []string{varAtPos(srcIntfcVarname, 1), startIntfcIndexes, TrueValue})
@@ -398,7 +398,7 @@ func (dpc *DataPathCSP) addInterfaceConstraints(pathLength int) {
 	dpc.fzModel.AddConstraint(SetInConstraint, []string{varAtPos(sinkIntfcVarname, pathLength), endIntfcIndexes, TrueValue})
 
 	// Finally, make sure a storage account is assigned iff there is a sink interface and it is non-virtual
-	if dpc.problemData.Context.Flow == taxonomy.WriteFlow && !dpc.problemData.Context.Requirements.FlowParams.IsNewDataSet {
+	if dpc.problemData[0].Context.Flow == taxonomy.WriteFlow && !dpc.problemData[0].Context.Requirements.FlowParams.IsNewDataSet {
 		for pathPos := 1; pathPos <= pathLength; pathPos++ {
 			dpc.fzModel.AddConstraint(IntEqConstraint,
 				[]string{varAtPos(saVarname, pathPos), strconv.Itoa(dpc.noStorageAccountVal), TrueValue})
@@ -481,7 +481,7 @@ func (dpc *DataPathCSP) addOptimizationGoals(pathLength int) error {
 	const floatToIntRatio = 100.
 	goalVarnames := []string{}
 	weights := []string{}
-	for _, goal := range dpc.problemData.Configuration.OptimizationStrategy {
+	for _, goal := range dpc.problemData[0].Configuration.OptimizationStrategy {
 		goalVarname, weight, err := dpc.addAnOptimizationGoal(goal, pathLength)
 		if err != nil {
 			return err
@@ -744,7 +744,7 @@ func (dpc *DataPathCSP) getCluster2ClusterParamArray(attr string) (string, error
 // The first line of the resulting matrix describes the attr value of the dataset-region vs each cluster
 func (dpc *DataPathCSP) getStorageToClusterParamArray(attr string) (string, error) {
 	s2cParamArray := []string{}
-	dataSetRegion := dpc.problemData.DataDetails.ResourceMetadata.Geography
+	dataSetRegion := dpc.problemData[0].DataDetails.ResourceMetadata.Geography
 	for _, cluster := range dpc.env.Clusters {
 		value, err := dpc.env.AttributeManager.GetNormAttrValFromArgs(attr, dataSetRegion, cluster.Metadata.Region)
 		if err != nil {
@@ -782,13 +782,13 @@ func (dpc *DataPathCSP) getSolutionActionsAtPos(solverSolution CPSolution, pathP
 // Translates a solver's solution into a FybrikApplication Solution for a given data-path
 // Also returns the score of the solution (the smaller the better) if such exists, and NaN otherwise
 // TODO: better handle error messages
-func (dpc *DataPathCSP) decodeSolverSolution(solverSolutionStr string, pathLen int) (datapath.Solution, float64, error) {
+func (dpc *DataPathCSP) decodeSolverSolution(solverSolutionStr string, pathLen int) ([]datapath.Solution, float64, error) {
 	solverSolution, err := dpc.fzModel.ReadBestSolution(solverSolutionStr)
 	if err != nil {
-		return datapath.Solution{}, math.NaN(), err
+		return nil, math.NaN(), err
 	}
 	if len(solverSolution) == 0 {
-		return datapath.Solution{}, math.NaN(), nil // UNSAT
+		return nil, math.NaN(), nil // UNSAT
 	}
 
 	modCapSolution := solverSolution[modCapVarname]
@@ -823,7 +823,7 @@ func (dpc *DataPathCSP) decodeSolverSolution(solverSolutionStr string, pathLen i
 		srcNode = sinkNode
 	}
 
-	if dpc.problemData.Context.Flow == taxonomy.WriteFlow {
+	if dpc.problemData[0].Context.Flow == taxonomy.WriteFlow {
 		solution.Reverse()
 	}
 
@@ -835,7 +835,7 @@ func (dpc *DataPathCSP) decodeSolverSolution(solverSolutionStr string, pathLen i
 		}
 	}
 
-	return solution, score, nil
+	return []datapath.Solution{solution}, score, nil
 }
 
 // ----- helper functions -----

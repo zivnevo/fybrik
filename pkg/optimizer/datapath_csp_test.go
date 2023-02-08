@@ -103,7 +103,7 @@ func getDataInfo(env *datapath.Environment) *datapath.DataInfo {
 func TestBuildModel(t *testing.T) {
 	env := getTestEnv()
 	dataInfo := getDataInfo(env)
-	dpCSP := NewDataPathCSP(dataInfo, env)
+	dpCSP := NewDataPathCSP([]datapath.DataInfo{*dataInfo}, env)
 	modelFile, err := dpCSP.BuildFzModel(3)
 	if modelFile != "" {
 		os.Remove(modelFile)
@@ -117,7 +117,7 @@ func TestRequiredCapability(t *testing.T) {
 	env := getTestEnv()
 	dataInfo := getDataInfo(env)
 	dataInfo.Configuration.ConfigDecisions["read"] = adminconfig.Decision{Deploy: adminconfig.StatusTrue}
-	dpCSP := NewDataPathCSP(dataInfo, env)
+	dpCSP := NewDataPathCSP([]datapath.DataInfo{*dataInfo}, env)
 	modelFile, err := dpCSP.BuildFzModel(3)
 	if modelFile != "" {
 		os.Remove(modelFile)
@@ -131,7 +131,7 @@ func TestRequiredCapabilityMissing(t *testing.T) {
 	env := getTestEnv()
 	dataInfo := getDataInfo(env)
 	dataInfo.Configuration.ConfigDecisions["transform"] = adminconfig.Decision{Deploy: adminconfig.StatusTrue}
-	dpCSP := NewDataPathCSP(dataInfo, env)
+	dpCSP := NewDataPathCSP([]datapath.DataInfo{*dataInfo}, env)
 	modelFile, err := dpCSP.BuildFzModel(3)
 	if modelFile != "" {
 		os.Remove(modelFile)
