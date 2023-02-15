@@ -496,3 +496,7 @@ func sanitizeFznIdentifier(identifier string) string {
 func varAtPos(variable string, pos int) string {
 	return fmt.Sprintf("%s[%d]", variable, pos)
 }
+
+func varAtGridPos(variable string, row, col, numCols int) string {
+	return varAtPos(variable, (row-1)*numCols+col)
+}

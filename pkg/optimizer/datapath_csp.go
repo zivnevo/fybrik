@@ -171,22 +171,26 @@ func (dpc *DataPathCSP) registerInterface(intfc *taxonomy.Interface) {
 // confusion. The only exception is with interfaces (0 means nil)
 func (dpc *DataPathCSP) BuildFzModel(pathLength int) (string, error) {
 	dpc.fzModel.Clear() // This function can be called multiple times - clear vars and constraints from last call
+	gridSize := pathLength * len(dpc.problemData)
 	// Variables to select the module capability we use on each data-path location
 	moduleCapabilityVarType := fznRangeVarType(1, len(dpc.modulesCapabilities))
-	dpc.fzModel.AddVariableArray(modCapVarname, moduleCapabilityVarType, pathLength, false, true)
+	dpc.fzModel.AddVariableArray(modCapVarname, moduleCapabilityVarType, gridSize, false, true)
 	// Variables to select storage-accounts to place on each data-path location (last value means no storage account)
 	saTypeVarType := fznRangeVarType(1, dpc.noStorageAccountVal)
-	dpc.fzModel.AddVariableArray(saVarname, saTypeVarType, pathLength, false, true)
+	dpc.fzModel.AddVariableArray(saVarname, saTypeVarType, gridSize, false, true)
 	// Variables to select the cluster we allocate to each module on the path
 	moduleClusterVarType := fznRangeVarType(1, len(dpc.env.Clusters))
-	dpc.fzModel.AddVariableArray(clusterVarname, moduleClusterVarType, pathLength+1, false, true)
-	// Fix moduleCluster[pathLength+1] to the workload cluster
+	dpc.fzModel.AddVariableArray(clusterVarname, moduleClusterVarType, gridSize+len(dpc.problemData), false, true)
+	// Fix moduleCluster[*, pathLength+1] to the workload cluster
 	workloadCluster := getWorkloadClusterIndex(dpc.problemData[0].WorkloadCluster, dpc.env.Clusters)
-	dpc.fzModel.AddConstraint(IntEqConstraint, []string{varAtPos(clusterVarname, pathLength+1), workloadCluster, TrueValue})
+	for row := 1; row <= len(dpc.problemData); row++ {
+		clusterAtPos := varAtGridPos(clusterVarname, row, pathLength+1, pathLength+1)
+		dpc.fzModel.AddConstraint(IntEqConstraint, []string{clusterAtPos, workloadCluster, TrueValue})
+	}
 	// Variables to select the source and sink interface for each module on the path (0 means nil interface)
 	moduleInterfaceVarType := fznRangeVarType(0, len(dpc.interfaceIdx)-1)
-	dpc.fzModel.AddVariableArray(srcIntfcVarname, moduleInterfaceVarType, pathLength, false, true)
-	dpc.fzModel.AddVariableArray(sinkIntfcVarname, moduleInterfaceVarType, pathLength, false, true)
+	dpc.fzModel.AddVariableArray(srcIntfcVarname, moduleInterfaceVarType, gridSize, false, true)
+	dpc.fzModel.AddVariableArray(sinkIntfcVarname, moduleInterfaceVarType, gridSize, false, true)
 
 	dpc.addInterfaceConstraints(pathLength)
 	dpc.addGovernanceActionConstraints(pathLength)
